@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 import css from './App.module.css';
@@ -6,28 +6,25 @@ import { PhonebookForm } from './PhonebookForm/PhonebookForm';
 import { ContactsList } from './ContactsList/ContactsList';
 import { Filter } from './Filter/Filter';
 
-export class App extends Component {
-  #LS_CONTACTS_KEY = 'contacts';
-  state = {
-    contacts: [],
-    filter: '',
-  };
+export function App() {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(localStorage.getItem('savedContacts')) ?? []
+  );
+  const [filter, setFilter] = useState('');
 
-  componentDidMount() {
-    const savedContacts = localStorage.getItem(this.#LS_CONTACTS_KEY);
+  useEffect(() => {
+    const savedContacts = JSON.parse(localStorage.getItem('savedContacts'));
     if (savedContacts) {
-      this.setState({ contacts: JSON.parse(savedContacts) });
+      setContacts([...savedContacts]);
     }
-  }
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts.length !== prevState.contacts.length) {
-      localStorage.setItem(this.#LS_CONTACTS_KEY, JSON.stringify(this.state.contacts));
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem('savedContacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  handleAddContact = contact => {
-    if (this.state.contacts.some(item => item.name.toLowerCase() === contact.name.toLowerCase())) {
+  const handleAddContact = contact => {
+    if (contacts.some(item => item.name.toLowerCase === contact.name.toLowerCase())) {
       iziToast.warning({
         title: 'Caution',
         message: `${contact.name} is already in contacts`,
@@ -36,44 +33,35 @@ export class App extends Component {
       });
       return true;
     }
-    this.setState(prevState => {
-      return {
-        contacts: [...prevState.contacts, contact],
-      };
+    setContacts(prevState => {
+      return [...prevState, contact];
     });
     return false;
   };
 
-  handleDeleteContact = id => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(contact => contact.id !== id),
-      };
+  const handleDeleteContact = id => {
+    setContacts(prevState => {
+      return prevState.filter(contact => contact.id !== id);
     });
   };
 
-  handleChangeFilter = evt => {
-    this.setState({ filter: evt.target.value });
+  const handleChangeFilter = evt => {
+    setFilter(evt.target.value);
   };
 
-  handleFilterContacts = () => {
-    return this.state.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(this.state.filter.toLowerCase().trim())
+  const handleFilterContacts = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase().trim())
     );
   };
 
-  render() {
-    return (
-      <div>
-        <h1 className={css.titleForm}>Phonebook</h1>
-        <PhonebookForm addContact={this.handleAddContact} />
-        <h2 className={css.titleContacts}>Contacts</h2>
-        <Filter value={this.state.filter} handleChange={this.handleChangeFilter} />
-        <ContactsList
-          contacts={this.handleFilterContacts()}
-          deleteContact={this.handleDeleteContact}
-        />
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h1 className={css.titleForm}>Phonebook</h1>
+      <PhonebookForm addContact={handleAddContact} />
+      <h2 className={css.titleContacts}>Contacts</h2>
+      <Filter value={filter} handleChange={handleChangeFilter} />
+      <ContactsList contacts={handleFilterContacts()} deleteContact={handleDeleteContact} />
+    </div>
+  );
 }
