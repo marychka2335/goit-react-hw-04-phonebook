@@ -13,18 +13,11 @@ export function App() {
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    const savedContacts = JSON.parse(localStorage.getItem('savedContacts'));
-    if (savedContacts) {
-      setContacts([...savedContacts]);
-    }
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem('savedContacts', JSON.stringify(contacts));
   }, [contacts]);
 
   const handleAddContact = contact => {
-    if (contacts.some(item => item.name.toLowerCase === contact.name.toLowerCase())) {
+    if (contacts.some(item => item.name.toLowerCase() === contact.name.toLowerCase())) {
       iziToast.warning({
         title: 'Caution',
         message: `${contact.name} is already in contacts`,
